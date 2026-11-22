@@ -12,7 +12,7 @@ For each decoded frame, `run_pipeline.py`:
 4. For videos, applies two separate persistent ByteTrack streams: one for non-person objects and one for people. Images are not tracked. Tracker IDs are independent between streams; ByteTrack does not provide ReID embeddings here.
 5. Writes processed frames as JSONL. If the video decoder reports a frame-index gap, the output includes explicit `skipped` records for the missing indices.
 
-Both models process the same ordered frame batches. The main command writes `<input-name>_predictions.jsonl` into the selected output directory. `predict_media.py` is a separate convenience script that saves an annotated YOLO detection image/video; it does not produce the pipeline JSONL schema.
+Both models process the same ordered frame batches. The main command writes `<input-name>_predictions.jsonl` into the selected output directory. `predict_media.py` is a separate convenience script that saves an annotated YOLO detection, tracking and posing video; it does not produce the pipeline JSONL schema.
 
 ## 2. Output schema
 
