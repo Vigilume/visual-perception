@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "frame_record.schema.json",
+  "title": "Visual Perception Frame Record",
+  "description": "One processed or explicitly skipped frame in the event-detection JSONL stream.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status", "camera_id", "frame_id", "timestamp",
+    "timestamp_source", "frame_size", "frame_gap_before", "skipped_frames_before",
+    "model_info", "tracker_info", "models_run", "detections", "people", "poses"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["processed", "skipped"]},
+    "camera_id": {"type": "string", "minLength": 1},
+    "frame_id": {"type": "integer", "minimum": 0},
+    "timestamp": {"type": "number", "minimum": 0},
+    "timestamp_source": {"enum": ["image_capture_epoch_argument", "capture_start_epoch_plus_frame_index_over_source_fps"]},
+    "frame_size": {
+      "type": "array", "prefixItems": [
+        {"type": "integer", "minimum": 1}, {"type": "integer", "minimum": 1}
+      ], "items": false, "minItems": 2, "maxItems": 2
+    },
+    "frame_gap_before": {"type": "boolean"},
+    "skipped_frames_before": {"type": "integer", "minimum": 0},
+    "skip_reason": {"type": "string", "minLength": 1},
+    "model_info": {
+      "type": "object", "additionalProperties": false,
+          "required": ["both_models_every_frame", "detector", "pose"],
+      "properties": {
+        "both_models_every_frame": {"type": "boolean"},
+        "detector": {
+          "type": "object", "additionalProperties": false,
+          "required": ["weights", "input_size", "confidence_threshold", "max_detections", "class_policy", "bag_class_ids", "bag_confidence_floor", "iou_threshold", "agnostic_nms"],
+          "properties": {
+            "weights": {"type": "string", "minLength": 1},
+            "input_size": {"$ref": "#/$defs/size"},
+            "confidence_threshold": {"$ref": "#/$defs/probability"},
+            "max_detections": {"type": "integer", "minimum": 1},
+            "class_policy": {"const": "all_coco_classes_except_person"},
+            "bag_class_ids": {"const": [24, 26, 28]},
+            "bag_confidence_floor": {"type": "number", "minimum": 0.1, "maximum": 0.15},
+            "iou_threshold": {"$ref": "#/$defs/probability"},
+            "agnostic_nms": {"const": true}
+          }
+        },
+        "pose": {
+          "type": "object", "additionalProperties": false,
+          "required": ["weights", "input_size", "person_confidence_threshold", "max_detections", "iou_threshold", "keypoint_format", "keypoint_coordinate_space", "keypoint_order"],
+          "properties": {
+            "weights": {"type": "string", "minLength": 1},
+            "input_size": {"$ref": "#/$defs/size"},
+            "person_confidence_threshold": {"type": "number", "minimum": 0.25, "maximum": 1},
+            "max_detections": {"type": "integer", "minimum": 1},
+            "iou_threshold": {"$ref": "#/$defs/probability"},
+            "keypoint_format": {"const": "COCO-17"},
+            "keypoint_coordinate_space": {"const": "original_frame_pixels"},
+            "keypoint_order": {"const": ["nose", "left_eye", "right_eye", "left_ear", "right_ear", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle"]}
+          }
+        }
+      }
+    },
+    "tracker_info": {
+      "type": "object", "additionalProperties": false,
+      "required": ["objects", "people"],
+      "properties": {
+        "objects": {"$ref": "#/$defs/tracker"},
+        "people": {"$ref": "#/$defs/tracker"}
+      }
+    },
+    "models_run": {
+      "type": "object", "additionalProperties": false,
+      "required": ["detector", "pose"],
+      "properties": {"detector": {"type": "boolean"}, "pose": {"type": "boolean"}}
+    },
+    "detections": {"type": "array", "items": {"$ref": "#/$defs/detection"}},
+    "people": {"type": "array", "items": {"$ref": "#/$defs/person"}},
+    "poses": {"type": "array", "items": {"$ref": "#/$defs/pose"}}
+  },
+  "$defs": {
+    "probability": {"type": "number", "minimum": 0, "maximum": 1},
+    "size": {
+      "type": "array", "prefixItems": [
+        {"type": "integer", "minimum": 1}, {"type": "integer", "minimum": 1}
+      ], "items": false, "minItems": 2, "maxItems": 2
+    },
+    "box": {
+      "type": "array", "prefixItems": [
+        {"type": "number"}, {"type": "number"}, {"type": "number"}, {"type": "number"}
+      ], "items": false, "minItems": 4, "maxItems": 4
+    },
+    "tracker": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "config", "track_high_thresh", "track_low_thresh", "new_track_thresh", "track_buffer", "match_thresh", "fuse_score", "with_reid", "enabled"],
+      "properties": {
+        "type": {"const": "ByteTrack"},
+        "config": {"type": "string", "minLength": 1},
+        "track_high_thresh": {"$ref": "#/$defs/probability"},
+        "track_low_thresh": {"$ref": "#/$defs/probability"},
+        "new_track_thresh": {"$ref": "#/$defs/probability"},
+        "track_buffer": {"type": "integer", "minimum": 0},
+        "match_thresh": {"$ref": "#/$defs/probability"},
+        "fuse_score": {"type": "boolean"},
+        "with_reid": {"const": false},
+        "enabled": {"type": "boolean"}
+      }
+    },
+    "detection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["index", "class_id", "class_name", "confidence", "xyxy", "track_id", "track_source"],
+      "properties": {
+        "index": {"type": "integer", "minimum": 0},
+        "class_id": {"type": "integer", "minimum": 1, "maximum": 79},
+        "class_name": {"type": "string", "minLength": 1},
+        "confidence": {"$ref": "#/$defs/probability"},
+        "xyxy": {"$ref": "#/$defs/box"},
+        "track_id": {"type": ["integer", "null"]},
+        "track_source": {"const": "yolo26s"}
+      }
+    },
+    "person": {
+      "type": "object", "additionalProperties": false,
+      "required": ["index", "class_id", "class_name", "confidence", "xyxy", "track_id", "track_source"],
+      "properties": {
+        "index": {"type": "integer", "minimum": 0},
+        "class_id": {"const": 0},
+        "class_name": {"const": "person"},
+        "confidence": {"$ref": "#/$defs/probability"},
+        "xyxy": {"$ref": "#/$defs/box"},
+        "track_id": {"type": ["integer", "null"]},
+        "track_source": {"const": "yolo_pose"}
+      }
+    },
+    "pose": {
+      "type": "object", "additionalProperties": false,
+      "required": ["detection_index", "track_id", "keypoints"],
+      "properties": {
+        "detection_index": {"type": "integer", "minimum": 0},
+        "track_id": {"type": ["integer", "null"]},
+        "keypoints": {
+          "type": "array", "minItems": 17, "maxItems": 17,
+          "items": {
+            "type": "array", "prefixItems": [
+              {"type": "number"}, {"type": "number"}, {"$ref": "#/$defs/probability"}
+            ], "items": false, "minItems": 3, "maxItems": 3
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "skipped"}}, "required": ["status"]},
+      "then": {
+        "required": ["skip_reason"],
+        "properties": {
+          "models_run": {"properties": {"detector": {"const": false}, "pose": {"const": false}}},
+          "model_info": {"properties": {"both_models_every_frame": {"const": false}}},
+          "detections": {"maxItems": 0}, "people": {"maxItems": 0}, "poses": {"maxItems": 0}
+        }
+      },
+      "else": {
+        "properties": {
+          "models_run": {"properties": {"detector": {"const": true}, "pose": {"const": true}}},
+          "model_info": {"properties": {"both_models_every_frame": {"const": true}}}
+        }
+      }
+    }
+  ]
+}

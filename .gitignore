@@ -1,0 +1,37 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments and local configuration
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Model weights and exported engines
+*.pt
+*.pth
+*.onnx
+*.engine
+*.plan
+*.torchscript
+
+# Local input data and generated outputs
+data/raw/
+results/
+outputs/
+*.jsonl
+*.jsonl.tmp
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# Notebook execution state
+.ipynb_checkpoints/
